@@ -20,10 +20,11 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+            transition: background 0.5s ease;
         }
         
         .container {
-            max-width: 900px;
+            max-width: 90vw;
             width: 100%;
             text-align: center;
             background-color: rgba(255, 255, 255, 0.85);
@@ -31,6 +32,7 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             padding: 30px;
             backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
         }
         
         .image-container {
@@ -40,6 +42,12 @@
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease;
+            /* Create a placeholder with a 16:9 aspect ratio */
+            aspect-ratio: 16/9;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .image-container:hover {
@@ -48,18 +56,59 @@
         
         img {
             max-width: 100%;
+            max-height: 80vh;
+            width: auto;
             height: auto;
             display: block;
-            margin: 0 auto;
+            border-radius: 8px;
+            transition: opacity 0.3s ease;
         }
         
         .hidden {
             display: none;
         }
         
+        .loading {
+            opacity: 0;
+        }
+        
+        .loaded {
+            opacity: 1;
+        }
+        
+        .placeholder {
+            color: #999;
+            font-size: 16px;
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 20px;
+                max-width: 95vw;
+            }
+            
+            .image-container {
+                aspect-ratio: 4/3;
+            }
+            
+            img {
+                max-height: 70vh;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 15px;
+                border-radius: 10px;
+            }
+            
+            .image-container {
+                aspect-ratio: 1/1;
+                border-radius: 8px;
             }
         }
     </style>
@@ -67,8 +116,12 @@
 <body>
     <div class="container hidden" id="imageContainer">
         <div class="image-container">
-            <!-- Replace "images/your-image.jpeg" with your actual image path -->
-            <img src="images/your-image.jpeg" alt="" width="600" height="400" id="displayedImage" onerror="hideImage()">
+            <div class="placeholder" id="placeholder">Loading image...</div>
+            <!-- Replace "images/your-image.jpg" with your actual image path -->
+            <img src="images/your-image.jpg" alt="" id="displayedImage" 
+                 class="loading" 
+                 onload="imageLoaded()" 
+                 onerror="hideImage()">
         </div>
     </div>
 
@@ -76,19 +129,56 @@
         function hideImage() {
             // If image fails to load, hide the container
             document.getElementById('imageContainer').classList.add('hidden');
+            document.getElementById('placeholder').textContent = "Image not found";
         }
         
-        // Check if image loaded successfully
-        window.onload = function() {
+        function imageLoaded() {
+            // Image loaded successfully
             const img = document.getElementById('displayedImage');
-            if (img.complete && img.naturalHeight !== 0) {
-                // Image loaded successfully, show the container
-                document.getElementById('imageContainer').classList.remove('hidden');
-            } else {
-                // Image failed to load, ensure container is hidden
-                hideImage();
+            const container = document.getElementById('imageContainer');
+            const placeholder = document.getElementById('placeholder');
+            
+            // Hide placeholder
+            placeholder.style.display = 'none';
+            
+            // Show image with fade-in effect
+            img.classList.remove('loading');
+            img.classList.add('loaded');
+            
+            // Show container
+            container.classList.remove('hidden');
+            
+            // Adjust container size based on image dimensions
+            adjustContainerSize(img);
+        }
+        
+        function adjustContainerSize(img) {
+            const container = document.getElementById('imageContainer');
+            const imageContainer = document.querySelector('.image-container');
+            
+            // Remove fixed aspect ratio to allow natural image sizing
+            imageContainer.style.aspectRatio = 'unset';
+            imageContainer.style.background = 'transparent';
+            
+            // Set a max width/height for very large images
+            if (img.naturalWidth > 1200 || img.naturalHeight > 800) {
+                img.style.maxWidth = '90vw';
+                img.style.maxHeight = '80vh';
             }
-        };
+        }
+        
+        // Fallback for images that might already be cached
+        window.addEventListener('DOMContentLoaded', function() {
+            const img = document.getElementById('displayedImage');
+            
+            if (img.complete) {
+                if (img.naturalHeight !== 0) {
+                    imageLoaded();
+                } else {
+                    hideImage();
+                }
+            }
+        });
     </script>
 </body>
 </html>
